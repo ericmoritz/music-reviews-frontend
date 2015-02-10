@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <body>
+    <ul>
+      {% for member in members %}
+      <li>
+	{{ member.rating.score }}: 
+	<a href="{{ member.uri }}" target="_blank">{{ member.album.artist }} - {{ member.album.title }}</a>
+	<a href="https://play.google.com/music/listen?u=1#/sr/{{ member.album.artist }} {{ member.album.title }}" target="_blank">&gt;&gt;</a>{% if user_uri.is_just %} | <a href="/seen?user={{ user_uri.from_just|urlencode }}&review={{ member.uri|urlencode }}&return={{ request_uri|urlencode }}">mark seen</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
