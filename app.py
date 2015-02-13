@@ -2,6 +2,7 @@ from flask import Flask, g, request, render_template, redirect
 import os
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore, SPARQLStore
 from rdflib import URIRef, Literal
+from rdflib.namespace import XSD
 import rdflib
 from collections import namedtuple
 from fp.monads.maybe import Maybe, Just
@@ -21,7 +22,10 @@ config = Config(
 ###############################################################################
 ## Records
 ###############################################################################
-Review = namedtuple("Review", [ "uri", "album", "reviewer", "rating" ])
+Review = namedtuple(
+    "Review", 
+    [ "uri", "pubdate", "album", "reviewer", "rating" ]
+)
 Album = namedtuple("Album", ["uri", "artist", "title"])
 Reviewer = namedtuple("Reviewer", ["uri", "name"])
 Rating = namedtuple("Rating", ["score"])
@@ -42,10 +46,11 @@ def _mark_seen(store, user_uri, review_uri):
     )
 
 
-def _query_top_albums(store, user_uri, score_min):
+def _query_top_albums(store, user_uri, score_min, pub_date):
     return [
         Review(
             r.review.toPython(),
+            r.pubDate.toPython(),
             Album(
                 r.album.toPython(),
                 r.artist.toPython(),
@@ -65,11 +70,12 @@ PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
 
 
 SELECT DISTINCT
-?review ?album ?artist ?title ?reviewer ?name ?normalizedScore
+?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore
 WHERE {{
        ?review :album ?album ;
                :reviewer ?reviewer ;
-               :rating ?score .
+               :rating ?score ;
+               :pubDate ?pubDate .
 
        ?album :title ?title ;
               :artist ?artist .
@@ -80,6 +86,7 @@ WHERE {{
 
        OPTIONAL {{ ?who :seen ?review }} .
        {user_filter_clause}
+       {pubdate_filter_clause}
        FILTER ( ?normalizedScore >= {score_min} ) .
 
 }}
@@ -88,10 +95,13 @@ ORDER BY DESC(?normalizedScore)
 LIMIT 100
         """.format(
             user_filter_clause="FILTER ( !bound(?who) || ?who != ?user ) ." if user_uri.is_just else "",
+            pubdate_filter_clause="FILTER ( ?pubdate > ?minPubDate ) ." if
+            pub_date.is_just else "",
             score_min=score_min.default(Literal(80)).toPython()
         ), 
         initBindings={
             "user": user_uri.default(Literal("")),
+            "pub_date": pub_date.default(Literal("")),
         }
     )
     ]
@@ -118,8 +128,23 @@ def index():
     score_min = Maybe(request.args.get('score_min')).bind(
         lambda x: Just(Literal(float(x)))
     )
+
+    pub_date = Maybe(request.args.get('pub_date_lte')).bind(
+        lambda x: Just(
+            Literal(
+                x,
+                datatype=XSD.date
+            )
+        )
+    )
+
     
-    top_albums = _query_top_albums(g.store, user_uri, score_min)
+    top_albums = _query_top_albums(
+        g.store, 
+        user_uri, 
+        score_min,
+        pub_date
+    )
 
 
     return render_template(
@@ -152,4 +177,7 @@ def seen():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(
+        port=int(os.environ['PORT']),
+        debug=True
+    )
