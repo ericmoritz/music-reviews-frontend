@@ -9,19 +9,20 @@ def abs_url_for(*args, **kwargs):
 
 def _album(x):
     return {
-        "artist": {
-            "@type": ["Artist"],
+        # schema.org fields
+        "byArtist": {
+            "@type": ["MusicGroup"],
             "name": x.artist,
         },
-        "@type": ["Album"],
-        "name": x.title
+        "@type": ["MusicAlbum"],
+        "name": x.title,
     }
 
 
 def _reviewer(x):
     return {
-        "@id": x.uri,
-        "@type": ["Reviewer"],
+        "@type": ["Person"],
+        "url": x.uri,
         "name": x.name,
     }
 
@@ -29,20 +30,25 @@ def _reviewer(x):
 def _rating(x):
     return {
         "@type": ["Rating"],
-        "normalizedScore": x.normalizedScore
+        "bestRating": 100,
+        "worstRating": 0,
+        "ratingValue": x.normalizedScore
     }
 
 
 def _review(collection_uri, subtype, review):
     review_id = queries.uri2id(review.uri)
     return {
+        # service fields
+        "review_id": review_id,
+
+        # schema.org fields for Review
         "url": review.uri,
         "@type": ["Review", subtype],
-        "review_id": review_id,
-        "pub_date": review.pubdate.isoformat(),
-        "album": _album(review.album),
-        "reviewer": _reviewer(review.reviewer),
-        "rating": _rating(review.rating),
+        "datePublished": review.pubdate.isoformat(),
+        "about": _album(review.album),
+        "author": _reviewer(review.reviewer),
+        "reviewRating": _rating(review.rating),
     }
 
 
@@ -121,29 +127,52 @@ def _link_forms(user_id, data):
     )
     return data
 
-
+def _context():
+    return {
+        "vocab": abs_url_for("vocab") + "#",
+        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "hydra": "http://www.w3.org/ns/hydra/core#",
+        
+        # hydra fields
+        "member": "hydra:member",
+        "Collection": "hydra:Collection",
+        
+        # service fields
+        ## links
+        "queue": {"@id": "vocab:queue", "@type": "@id"},
+        "seen": {"@id": "vocab:seen", "@type": "@id"},
+        "loginForm": "vocab:loginForm",
+        "review_id": "vocab:review_id",
+        "ReviewList": "vocab:ReviewList",
+        "user": "vocab:user",
+        "User": "vocab:User",
+        "User/Queue": "vocab:User/Queue",
+        "User/Queue/Item": "vocab:User/Queue/Item",
+        "User/Seen": "vocab:User/Seen",
+        "User/Seen/Item": "vocab:User/Seen/Item",
+        
+        # schema.org fields/classes
+        "MusicGroup": "schema:MusicGroup",
+        "MusicAlbum": "schema:MusicAlbum",
+        "Person": "schema:Person",
+        "datePublished": {"@id": "schema:datePublished","@type": "xsd:date"},
+        "name": "schema:name",
+        "url": "schema:url",
+        "Rating": "schema:Rating",
+        "bestRating": "schema:bestRating",
+        "worstRating": "schema:worstRating",
+        "ratingValue": "schema:ratingValue",
+        "Review": "schema:Review",
+        "about": "schema:about",
+        "author": "schema:author",
+        "reviewRating": "schema:reviewRating",
+    }
 def _service_response(fun):
     @wraps(fun)
     def inner(*args, **kwargs):
         d = fun(*args, **kwargs)
-        CONTEXT={
-            "@vocab": abs_url_for("vocab") + "#",
-            "schema": "http://schema.org/",
-            "xsd": "http://www.w3.org/2001/XMLSchema#",
-            "queue": {"@type": "@id"},
-            "seen": {"@type": "@id"},
-            "pub_date": {"@type": "xsd:date"},
-            "name": "schema:name",
-            "url": "schema:url",
-            "member": "hydra:member",
-            "hydra": "http://www.w3.org/ns/hydra/core#",
-            "Collection": "hydra:Collection",
-        }
-
-        d.update({
-            "@context": CONTEXT,
-        })
-            
+        d.update({"@context": _context()})
         return jsonify(**d)
     return inner
 
@@ -168,74 +197,22 @@ def service(config):
             },
             "hydra:supportedClass": [
                 {
-                    "@id": "Review",
-                    "rdfs:label": "Review",
-                    "rdfs:comment": "An album review",
-                    "hydra:supportedProperty": [
-                        {
-                            "hydra:property": {
-                                "@id": "review_id",
-                                "rdfs:comment": "The review's short id"
-                            }
-                        },
-                        {
-                            "hydra:property": {
-                                "@id": "pub_date",
-                                "rdfs:comment": "The publish date of the review",
-                            },
-                        },
-                        {
-                            "hydra:property": {
-                                "@id": "album",
-                                "rdfs:range": "Album"
-                            },
-                        },
-                        {
-                            "hydra:property": {
-                                "@id": "reviewer",
-                                "rdfs:range": "Reviewer",
-                            },
-                        },
-                        {
-                            "hydra:property": {
-                                "@id": "rating",
-                                "rdfs:range": "Rating"
-                            }
-                        }
-                    ]
+                    "@id": "User"
                 },
                 {
-                    "@id": "Album",
-                    "hydra:supportedProperty": [
-                        {"hydra:property": "schema:name"},
-                        {"hydra:property": {
-                            "@id": "artist",
-                            "rdfs:range": "Artist"
-                        }},
-                    ]
+                    "@id": "User/Queue"
                 },
                 {
-                    "@id": "Artist",
-                    "hydra:supportedProperty": [
-                        {"hydra:property": "schema:name"},
-                    ]
+                    "@id": "User/Queue/Item"
                 },
                 {
-                    "@id": "Rating",
-                    "hydra:supportedProperty": [
-                        {
-                            "property": {
-                                "@id": "normalizedScore",
-                                "rdfs:comment": "The normalized score for the review, 0-100"
-                            },
-                        }
-                    ]
+                    "@id": "User/Seen"
                 },
                 {
-                    "@id": "User",
-                    "hydra:supportedProperty": [
-                    ]
-                }
+                    "@id": "User/Seen/Item"
+                },
+
+
             ]
         })
 
