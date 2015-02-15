@@ -110,13 +110,13 @@ def _link_forms(user_id, data):
                 "template": abs_url_for("users_queue", user_id=user_id) + "{?pub_date_gte,score_gte}",
                 "mapping": [
                     {
-                        "property": "pub_date",
+                        "property": "datePublished",
                         "variable": "pub_date_gte",
                         "comment": "Restrict queue to items with a pub_date >= given pub_date",
                         "required": False,
                     },
                     {
-                        "property": "normalizedScore",
+                        "property": "ratingValue",
                         "variable": "score_gte",
                         "comment": "Restrict queue to items with a rating >= given normalizedScore",
                         "required": False
@@ -129,20 +129,28 @@ def _link_forms(user_id, data):
 
 def _context():
     return {
-        "vocab": abs_url_for("vocab") + "#",
+        "vocab": "http://rdf.vocab-ld.org/vocabs/music-reviews.jsonld#",
         "schema": "http://schema.org/",
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "hydra": "http://www.w3.org/ns/hydra/core#",
-        
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "comment": "rdfs:comment",
+
         # hydra fields
         "member": "hydra:member",
         "Collection": "hydra:Collection",
-        
+        "template": "hydra:template", 
+        "mapping": "hydra:mapping",
+        "property": "hydra:property",
+        "variable": "hydra:variable",
+        "IriTemplate": "hydra:IriTemplate",
+
         # service fields
         ## links
         "queue": {"@id": "vocab:queue", "@type": "@id"},
         "seen": {"@id": "vocab:seen", "@type": "@id"},
         "loginForm": "vocab:loginForm",
+        "queueForm": "vocab:queueForm", 
         "review_id": "vocab:review_id",
         "ReviewList": "vocab:ReviewList",
         "user": "vocab:user",
@@ -151,7 +159,7 @@ def _context():
         "User/Queue/Item": "vocab:User/Queue/Item",
         "User/Seen": "vocab:User/Seen",
         "User/Seen/Item": "vocab:User/Seen/Item",
-        
+
         # schema.org fields/classes
         "MusicGroup": "schema:MusicGroup",
         "MusicAlbum": "schema:MusicAlbum",
@@ -166,6 +174,7 @@ def _context():
         "Review": "schema:Review",
         "about": "schema:about",
         "author": "schema:author",
+        "byArtist": "schema:byArtist",
         "reviewRating": "schema:reviewRating",
     }
 def _service_response(fun):
@@ -178,57 +187,29 @@ def _service_response(fun):
 
 
 def service(config):
-    
+
     app = Flask("service")
     @app.before_request
     def cfg_store():
         g.store = queries.io_init(config)
 
-
-    @app.route("/vocab")
-    def vocab():
-        return jsonify(**{
-            "@context": {
-                "@vocab": request.base_url,
-                "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-                "hydra": "http://www.w3.org/ns/hydra/core#",
-                "schema": "http://schema.org/",
-            },
-            "hydra:supportedClass": [
-                {
-                    "@id": "User"
-                },
-                {
-                    "@id": "User/Queue"
-                },
-                {
-                    "@id": "User/Queue/Item"
-                },
-                {
-                    "@id": "User/Seen"
-                },
-                {
-                    "@id": "User/Seen/Item"
-                },
-
-
-            ]
-        })
-
+    @app.after_request
+    def cors(response):
+        response.headers['Access-Control-Allow-Origin']  = "*"
+        return response
 
     @app.route("/")
     @_service_response
     def index():
         return {
             "loginForm": {
-                "@type": "hydra:IriTemplate",
-                "hydra:template": abs_url_for("login") + "{?user_uri}",
-                "hydra:mapping": [
+                "@type": "IriTemplate",
+                "template": abs_url_for("login") + "{?user_uri}",
+                "mapping": [
                     {
-                        "hydra:property": "@id",
-                        "hydra:variable": "user_uri",
-                        "rdfs:comment": "Login with a user's URI"
+                        "property": "@id",
+                        "variable": "user_uri",
+                        "comment": "Login with a user's URI"
                     }
                 ]
             }
