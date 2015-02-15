@@ -1,0 +1,27 @@
+{
+  "@context": {
+    "@vocab": "http://rdf.vocab-ld.org/vocabs/music-reviews.jsonld#", 
+    "hydra": "http://www.w3.org/ns/hydra/core#", 
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
+    "schema": "http://schema.org/"
+  }, 
+  "hydra:supportedClass": [
+    {
+    {
+      "@id": "User"
+    }, 
+    {
+      "@id": "User/Queue"
+    }, 
+    {
+      "@id": "User/Queue/Item"
+    }, 
+    {
+      "@id": "User/Seen"
+    }, 
+    {
+      "@id": "User/Seen/Item"
+    }
+  ]
+}
