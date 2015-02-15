@@ -2,6 +2,7 @@ import base64
 from mr_service import records
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib import URIRef, Literal
+from rdflib.namespace import XSD
 
 ###############################################################################
 ## Queries
@@ -45,9 +46,11 @@ def io_top_albums(
         pub_date_gte=None
 ):
     if user_id:
-        user_uri = id2uri(user_id)
+        user_uri = URIRef(id2uri(user_id))
+        use_user_uri = True
     else:
-        user_uri = None
+        user_uri = Literal("")
+        use_user_uri = False
 
     if score_gte is None:
         score_gte = 80
@@ -99,13 +102,16 @@ WHERE {{
 ORDER BY DESC(?normalizedScore)
 LIMIT 100
         """.format(
-            user_filter_clause="FILTER ( !bound(?who) || ?who != ?user ) ." if user_uri else "",
-            pubdate_filter_clause="FILTER ( ?pubdate > ?pub_date ) ." if pub_date_gte else "",
+            user_filter_clause="FILTER ( !bound(?who) || ?who != ?user ) ." if use_user_uri else "",
+            pubdate_filter_clause="FILTER ( ?pubDate >= \"{pub_date}\"^^<{dt}> ) .".format(
+                pub_date=pub_date_gte,
+                dt=unicode(XSD.date)
+            )
+            if pub_date_gte else "",
             score_min=Literal(score_gte)
         ), 
         initBindings={
-            "user": URIRef(user_uri) if user_uri else Literal(""),
-            "pub_date": Literal(pub_date_gte if pub_date_gte else ""),
+            "user": user_uri
         }
     )
     ]
