@@ -1,6 +1,5 @@
 {
   "@context": {
-    "@vocab": "X@%$$#%#$XX:#",
       "vocab": "http://rdf.vocab-ld.org/vocabs/music-reviews.jsonld#", 
       "hydra": "http://www.w3.org/ns/hydra/core#", 
       "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
