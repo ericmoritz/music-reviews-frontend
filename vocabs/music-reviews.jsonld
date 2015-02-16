@@ -1,27 +1,89 @@
 {
   "@context": {
-    "@vocab": "http://rdf.vocab-ld.org/vocabs/music-reviews.jsonld#", 
-    "hydra": "http://www.w3.org/ns/hydra/core#", 
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
-    "schema": "http://schema.org/"
+    "@vocab": "X@%$$#%#$XX:#",
+      "vocab": "http://rdf.vocab-ld.org/vocabs/music-reviews.jsonld#", 
+      "hydra": "http://www.w3.org/ns/hydra/core#", 
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#", 
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#", 
+      "schema": "http://schema.org/"
   }, 
   "hydra:supportedClass": [
-    {
-    {
-      "@id": "User"
-    }, 
-    {
-      "@id": "User/Queue"
-    }, 
-    {
-      "@id": "User/Queue/Item"
-    }, 
-    {
-      "@id": "User/Seen"
-    }, 
-    {
-      "@id": "User/Seen/Item"
-    }
+      {
+	  "@id": "vocab:Resource",
+	  "rdfs:subClassOf": "hydra:Resource",
+	  "hydra:supportedProperty": [
+	      {
+		  "@id": "vocab:user",
+		  "@type": "hydra:Link",
+		  "rdfs:range": "vocab:User"
+	      },
+	      {
+		  "@id": "vocab:loginForm",
+		  "@type": "hydra:TemplatedLink",
+		  "rdfs:comment": "The templated link to log a user in",
+		  "rdfs:range": "hydra:IriTemplate"
+	      }
+	  ]
+      },
+      {
+	  "@id": "vocab:Index",
+	  "rdfs:subClassOf": "vocab:Resource",
+	  "rdfs:comment": "The service's index resource"
+      },
+      {
+	  "@id": "vocab:User",
+	  "rdfs:subClassOf": "vocab:Resource",
+      "hydra:supportedProperty": [
+              {
+		  "@id": "vocab:seen",
+		  "@type": "hydra:Link",
+		  "rdfs:comment": "The link to the user's User/Seen resource",
+		  "rdfs:range": "vocab:User/Seen"
+	      },
+	      {
+		  "@id": "vocab:queue",
+		  "@type": "hydra:Link",
+		  "rdfs:comment": "The link to the user's User/Queue resource",
+		  "rdfs:range": "vocab:User/Queue"
+	      }
+	  ]
+      }, 
+      {
+	  "@id": "vocab:ReviewList",
+	  "rdfs:comment": "A list of schema:Reviews",
+	  "rdfs:subClassOf": ["vocab:Resource", "hydra:Collection"]
+      },
+      {
+	  "@id": "vocab:User/Queue",
+	  "rdfs:comment": "The User's Review Queue. This queue is a list of the highest rated reviews the user has not seen",
+	  "rdfs:subClassOf": "vocab:ReviewList",
+	  "hydra:supportedProperty": [
+	      {
+		  "@id": "vocab:queueForm",
+		  "@type": "hydra:TemplatedLink",
+		  "rdfs:comment": "This form is used for searching the queue"
+	      },
+	      {
+		  "@id": "vocab:seenItem",
+		  "@type": "hydra:TemplatedLink",
+		  "rdfs:comment": "This form allows the user agent to construct a URL for a User/Seen/Item resource"
+	      }
+	  ]
+      },
+      {
+	  "@id": "vocab:User/Queue/Item",
+	  "rdfs:comment": "An item in the seen reviews list",
+	  "rdfs:subClassOf": "vocab:Resource"
+      },
+      {
+	  "@id": "vocab:User/Seen",
+	  "rdfs:comment": "The User's Seen Reviews list. This is a list of the reviews the user has already seen",
+	  "rdfs:subClassOf": "vocab:ReviewList"
+      },
+      {
+	  "@id": "vocab:User/Seen/Item",
+	  "rdfs:comment": "An item in the seen reviews list",
+	  "rdfs:subClassOf": "vocab:Resource"
+      }
   ]
 }
