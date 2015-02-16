@@ -64,7 +64,19 @@ def _review_list(request_uri, subtype, member_subtype, reviews):
 def _seen_item(user_id):
     return {
         "@type": "IriTemplate",
-        "template": abs_url_for("users_queue", user_id=user_id) + "{review_id}",
+        "template": abs_url_for("users_seen", user_id=user_id) + "{review_id}",
+        "operation": [
+            {
+                "@type": "DeleteResourceOperation",
+                "comment": "If you delete a review into a user's seen collection, it adds it to their queue",
+                "method": "DELETE"
+            },
+            {
+                "@type": "CreateResourceOperation",
+                "comment": "If you put a review into a user's seen collection, it removes it from their queue",
+                "method": "PUT"
+            }
+        ],
         "mapping": [
             {
                 "variable": "review_id",
@@ -144,6 +156,10 @@ def _context():
         "property": "hydra:property",
         "variable": "hydra:variable",
         "IriTemplate": "hydra:IriTemplate",
+        "operation": "hydra:operation",
+        "CreateResourceOperation": "hydra:CreateResourceOperation",
+        "DeleteResourceOperation": "hydra:DeleteResourceOperation",
+        "method": "hydra:method",
 
         # service fields
         ## links
@@ -258,13 +274,16 @@ def service(config):
     @app.route("/user/<user_id>/seen/")
     @_service_response
     def users_seen(user_id):
-        return _link_user(
+        return _link_seen_item(
             user_id,
-            _review_list(
-                request.base_url,
-                "User/Seen",
-                "User/Seen/Item",
-                [] # TODO
+            _link_user(
+                user_id,
+                _review_list(
+                    request.base_url,
+                    "User/Seen",
+                    "User/Seen/Item",
+                    [] # TODO
+                )
             )
         )
 
