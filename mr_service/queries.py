@@ -78,7 +78,7 @@ PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
 
 
 SELECT DISTINCT
-?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore
+?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore (bound(?who) as ?seen)
 WHERE {{
        ?review :album ?album ;
                :reviewer ?reviewer ;
@@ -102,12 +102,17 @@ WHERE {{
 ORDER BY DESC(?normalizedScore)
 LIMIT 100
         """.format(
-            user_filter_clause="FILTER ( !bound(?who) || ?who != ?user ) ." if use_user_uri else "",
-            pubdate_filter_clause="FILTER ( ?pubDate >= \"{pub_date}\"^^<{dt}> ) .".format(
-                pub_date=pub_date_gte,
-                dt=unicode(XSD.date)
-            )
-            if pub_date_gte else "",
+            user_filter_clause=(
+                "FILTER ( !bound(?who) || ?who != ?user ) ." 
+                if use_user_uri else ""
+            ),
+            pubdate_filter_clause=(
+                "FILTER ( ?pubDate >= \"{pub_date}\"^^<{dt}> ) .".format(
+                    pub_date=pub_date_gte,
+                    dt=unicode(XSD.date)
+                )
+                if pub_date_gte else ""
+            ),
             score_min=Literal(score_gte)
         ), 
         initBindings={

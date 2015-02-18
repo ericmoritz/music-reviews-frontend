@@ -1,1 +1,1 @@
-web: .venv/bin/python app.py
+web: .venv/bin/gunicorn app:app
