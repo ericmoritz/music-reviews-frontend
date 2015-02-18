@@ -39,6 +39,26 @@ def io_mark_seen(store, user_id, review_id):
     )
 
 
+def sparql_to_review(r):
+    return records.Review(
+        r.review.toPython(),
+        r.pubDate.toPython(),
+        r.is_seen.toPython(),
+        records.Album(
+            r.album.toPython(),
+            r.artist.toPython(),
+            r.title.toPython()
+        ),
+        records.Reviewer(
+            r.reviewer.toPython(),
+            r.name.toPython()
+        ),
+        records.Rating(
+            r.normalizedScore.toPython()
+        )
+    )
+
+
 def io_top_albums(
         store, 
         user_id=None, 
@@ -55,26 +75,9 @@ def io_top_albums(
     if score_gte is None:
         score_gte = 80
         
-    return [
-        records.Review(
-            r.review.toPython(),
-            r.pubDate.toPython(),
-            r.is_seen.toPython(),
-            records.Album(
-                r.album.toPython(),
-                r.artist.toPython(),
-                r.title.toPython()
-            ),
-            records.Reviewer(
-                r.reviewer.toPython(),
-                r.name.toPython()
-            ),
-            records.Rating(
-                r.normalizedScore.toPython()
-            )
-        )
-                
-        for r in store.query("""
+    return map(
+        sparql_to_review,
+        store.query("""
 PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
 
 
@@ -119,5 +122,33 @@ LIMIT 100
         initBindings={
             "user": user_uri
         }
+                )
     )
-    ]
+
+
+def io_seen_reviews(store, user_id):
+    return map(
+        sparql_to_review, 
+        store.query(
+            """
+PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
+
+SELECT DISTINCT ?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore (true as ?is_seen)
+WHERE {
+  ?review :album ?album ;
+          :reviewer ?reviewer ;
+          :rating ?score ;
+          :pubDate ?pubDate .
+
+  ?album :title ?title ;
+         :artist ?artist .
+
+  ?reviewer :name ?name .
+  
+  ?score :normalizedScore ?normalizedScore .
+
+  ?user_id :seen ?review .
+}
+ORDER BY ?title ?artist
+            """)
+    )

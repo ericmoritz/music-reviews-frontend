@@ -283,7 +283,10 @@ def service(config):
                     request.base_url,
                     "User/Seen",
                     "User/Seen/Item",
-                    [] # TODO
+                    queries.io_seen_reviews(
+                        g.store, 
+                        user_id
+                    )
                 )
             )
         )
