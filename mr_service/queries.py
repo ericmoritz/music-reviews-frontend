@@ -59,6 +59,7 @@ def io_top_albums(
         records.Review(
             r.review.toPython(),
             r.pubDate.toPython(),
+            r.is_seen.toPython(),
             records.Album(
                 r.album.toPython(),
                 r.artist.toPython(),
@@ -78,7 +79,7 @@ PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
 
 
 SELECT DISTINCT
-?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore (bound(?who) as ?seen)
+?review ?pubDate ?album ?artist ?title ?reviewer ?name ?normalizedScore (bound(?who) as ?is_seen)
 WHERE {{
        ?review :album ?album ;
                :reviewer ?reviewer ;

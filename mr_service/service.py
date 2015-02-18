@@ -44,6 +44,7 @@ def _review(collection_uri, subtype, review):
 
         # schema.org fields for Review
         "url": review.uri,
+        "isSeen": review.is_seen,
         "@type": ["Review", subtype],
         "datePublished": review.pubdate.isoformat(),
         "about": _album(review.album),
@@ -162,9 +163,9 @@ def _context():
         "method": "hydra:method",
 
         # service fields
-        ## links
         "queue": {"@id": "vocab:queue", "@type": "@id"},
         "seen": {"@id": "vocab:seen", "@type": "@id"},
+        "isSeen": "vocab:isSeen",
         "loginForm": "vocab:loginForm",
         "queueForm": "vocab:queueForm", 
         "review_id": "vocab:review_id",
