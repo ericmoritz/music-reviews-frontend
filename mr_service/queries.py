@@ -39,6 +39,23 @@ def io_mark_seen(store, user_id, review_id):
     )
 
 
+def io_unsee(store, user_id, review_id):
+    user_uri = id2uri(user_id)
+    review_uri = id2uri(review_id)
+
+    store.update(
+        """
+        PREFIX : <tag:ericmoritz@gmail.com,2015:vocabs/mrs#>
+        DELETE DATA {{
+          <{user}> :seen <{review}> .
+        }}
+        """.format(
+            user=user_uri, 
+            review=review_uri
+        )
+    )
+
+
 def sparql_to_review(r):
     return records.Review(
         r.review.toPython(),
@@ -149,6 +166,6 @@ WHERE {
 
   ?user_id :seen ?review .
 }
-ORDER BY ?title ?artist
+ORDER BY DESC(?pubDate) ?title ?artist
             """)
     )

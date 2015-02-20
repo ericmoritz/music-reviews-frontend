@@ -166,6 +166,7 @@ def _context():
         "queue": {"@id": "vocab:queue", "@type": "@id"},
         "seen": {"@id": "vocab:seen", "@type": "@id"},
         "isSeen": "vocab:isSeen",
+        "seenItem": "vocab:seenItem",
         "loginForm": "vocab:loginForm",
         "queueForm": "vocab:queueForm", 
         "review_id": "vocab:review_id",
@@ -213,6 +214,7 @@ def service(config):
     @app.after_request
     def cors(response):
         response.headers['Access-Control-Allow-Origin']  = "*"
+        response.headers['Access-Control-Allow-Methods'] = "GET, PUT, DELETE, POST"
         return response
 
     @app.route("/")
@@ -293,7 +295,6 @@ def service(config):
 
 
     @app.route("/user/<user_id>/seen/<review_id>", methods=["PUT"])
-    @_service_response
     def put_seen(user_id, review_id):
         queries.io_mark_seen(
             g.store,
@@ -303,11 +304,10 @@ def service(config):
         return ""
 
     @app.route("/user/<user_id>/seen/<review_id>", methods=["DELETE"])
-    @_service_response
     def delete_seen(user_id, review_id):
         user_uri = queries.id2uri(user_id)
         review_uri = queries.id2uri(review_id)
-        queries.io_unseen(
+        queries.io_unsee(
             g.store,
             user_id,
             review_id
